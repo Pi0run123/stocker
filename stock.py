@@ -12,6 +12,7 @@ from customtkinter import *
 import quantstats as qs
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from sklearn.linear_model import LogisticRegression
+from lynch_val import StockAnalyzer
 
 class StockApp(CTk):
     def __init__(self):
@@ -23,8 +24,35 @@ class StockApp(CTk):
         self.options_frame = OptionsFrame(master=self,fg_color='#343a40',border_color='#A49E9E', border_width=3)
         self.options_frame.pack(expand=True)
         self.options_frame.place(x=5,y=110)
+        self.lynch_val = LynchFrame(master=self,fg_color='#343a40',border_color='#A49E9E', border_width=3)
+        self.lynch_val.pack(expand=True)
+        self.lynch_val.place(x=340,y=110)
         self._set_appearance_mode("Dark")
-        
+
+class LynchFrame(CTkFrame):
+    def __init__(self, master=None, **kwargs):
+        super().__init__(master, **kwargs)
+        self.create_widgets()
+
+    def create_widgets(self):
+        self.label_ticker = CTkLabel(self, text_color="white", text="Enter Yahoo Finance Ticker:")
+        self.label_ticker.grid(row=1, column=1, padx=20, pady=10)
+        self.entry_ticker = CTkEntry(self)
+        self.entry_ticker.grid(row=1, column=2, padx=10, pady=10)
+        self.button_lynch = CTkButton(self, text="Lynch Value", command=self.calculate_lynch_value)
+        self.button_lynch.grid(row=2, column=2, padx=10, pady=10)
+
+    def calculate_lynch_value(self):
+        ticker = self.entry_ticker.get().upper()
+        try:
+            stock_analyzer = StockAnalyzer(ticker)
+            earnings_estimate = stock_analyzer.fetch_earnings_estimate()
+            current_price = stock_analyzer.fetch_current_price()
+            forward_pe = stock_analyzer.calculate_forward_pe(current_price, earnings_estimate)
+            print(f"Forward PE Ratio: {forward_pe}")
+        except Exception as e:
+            tkMessageBox.showerror("Error", f"Failed to calculate Lynch value: {str(e)}")
+
 class OptionsFrame(CTkFrame):
     def __init__(self, master=None, **kwargs):
         super().__init__(master, **kwargs)
@@ -43,6 +71,7 @@ class OptionsFrame(CTkFrame):
         self.button_mongo.grid(row=5, column=1, padx=10, pady=10)
         self.button_data_correctness = CTkButton(self, text="Correctness", command=self.master.stock_frame.data_correctness)
         self.button_data_correctness.grid(row=3, column=2, padx=10, pady=10)
+        
 
 class StockFrame(CTkFrame):
     def __init__(self, master=None, **kwargs):
